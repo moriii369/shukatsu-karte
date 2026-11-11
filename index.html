@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Zen+Old+Mincho:wght@700;900&display=swap" rel="stylesheet">
 <style>
 /* =========================================================
-   就活カルテ（2枚目：メンバーが記入）
+   就活カルテ（メンバーが記入）
    見た目の調整は :root の色・サイズを変えるのが手軽です
    ========================================================= */
 :root{
@@ -104,6 +104,7 @@ select.rule-input:invalid{color:#8b98a1}
 .choice span::before{
   content:"";flex:none;width:13px;height:13px;border:1.5px solid var(--text);background:#fff;
 }
+.choice span b{font-weight:inherit;word-break:keep-all;overflow-wrap:anywhere}
 .choice input:checked + span{background:var(--choice-on);border:1.5px solid var(--navy);font-weight:700}
 .choice input:checked + span::before{
   background:var(--navy);border-color:var(--navy);
@@ -133,6 +134,12 @@ select.rule-input:invalid{color:#8b98a1}
 .prompt{display:block;font-weight:500;margin:4px 0 0}
 .prompt small{font-size:12px;color:var(--muted);font-weight:500;margin-left:4px}
 .field{margin-bottom:14px}
+.a-values{margin-top:6px;padding-top:4px}
+.round{border:1px solid var(--line);border-radius:4px;padding:10px 10px 4px;margin-bottom:14px}
+.round-head{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;margin-bottom:12px;font-size:13px;font-weight:500}
+.round-tag{background:#fff;color:var(--navy);border:1.5px solid var(--navy);border-radius:999px;font-weight:700;font-size:13px;padding:0 10px;line-height:1.7}
+#round1 .q{margin-bottom:14px}
+.cap > span{display:inline-block}
 
 /* ---------- 送信 ---------- */
 .actions{margin-top:26px;text-align:center}
@@ -225,7 +232,6 @@ select.rule-input:invalid{color:#8b98a1}
         <p class="kicker">自身の就活軸を探る　[2026.11.14.大しごとーくSD部門]</p>
         <div class="title">
           <h1>就活カルテ</h1>
-          <span class="sub">《２枚目：メンバーが記入》</span>
         </div>
       </div>
       <div class="who" data-field="writer">
@@ -279,30 +285,41 @@ select.rule-input:invalid{color:#8b98a1}
     <section class="box" aria-labelledby="secA">
       <div class="band">
         <h2 id="secA">A. 究極の２択</h2>
-        <p>理由を深堀してみよう！</p>
+        <p>相手は何を大事にしているんだろう？</p>
       </div>
-      <div class="box-body" id="questions"></div>
+      <div class="box-body">
+        <div class="round">
+          <div class="round-head"><span class="round-tag">1回目</span><span>直感で選んでみよう！</span></div>
+          <div id="round1"></div>
+        </div>
+        <div class="round">
+          <div class="round-head"><span class="round-tag">2回目</span><span class="cap"><span>自分の価値観を考えてみよう！／</span><span>選んだ理由を質問してみよう！</span></span></div>
+          <div id="questions"></div>
+        </div>
+        <div class="a-values">
+          <div class="field" data-field="value">
+            <label class="prompt" for="value">気になった価値観は？</label>
+            <textarea class="lined one" id="value" name="value" rows="1"></textarea>
+            <p class="err-msg">気になった価値観を書いてください</p>
+          </div>
+          <div class="field" data-field="valueReason">
+            <label class="prompt" for="valueReason">その理由は？</label>
+            <textarea class="lined" id="valueReason" name="valueReason" rows="2"></textarea>
+            <p class="err-msg">理由を書いてください</p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div class="fold" aria-hidden="true"></div>
 
-    <!-- B. 所感 -->
+    <!-- B. 所見 -->
     <section class="box" aria-labelledby="secB">
       <div class="band">
-        <h2 id="secB">B. 所感</h2>
+        <h2 id="secB">B. 所見</h2>
         <p>全体を通して持ち主に伝えたいことを書こう！</p>
       </div>
       <div class="box-body">
-        <div class="field" data-field="value">
-          <label class="prompt" for="value">気になった価値観は？</label>
-          <textarea class="lined one" id="value" name="value" rows="1"></textarea>
-          <p class="err-msg">気になった価値観を書いてください</p>
-        </div>
-        <div class="field" data-field="valueReason">
-          <label class="prompt" for="valueReason">その理由は？</label>
-          <textarea class="lined" id="valueReason" name="valueReason" rows="2"></textarea>
-          <p class="err-msg">理由を書いてください</p>
-        </div>
         <div class="field" data-field="good">
           <label class="prompt" for="good">話を聞いて、いいなと思ったこと<small>（書く側の感想）</small></label>
           <textarea class="lined" id="good" name="good" rows="2"></textarea>
@@ -370,38 +387,45 @@ const ENDPOINT = "https://script.google.com/macros/s/AKfycbzU3nsYXFJigBz6Ys1EEmT
    ② 2択の中身
    ========================================================= */
 const QUESTIONS = [
-  { id:"q1", a:"安定した会社",         b:"成長志向の会社" },
+  { id:"q1", a:"安定して堅実に、ステップアップできる環境", b:"実力主義で、評価が直結。急成長も狙える環境" },
   { id:"q2", a:"１人で取り組む",       b:"みんなで協力" },
   { id:"q3", a:"稼げるけど休みにくい", b:"休めるけど稼ぎはそこそこ" }
 ];
 
 /* 送信する項目（Code.gs の KEYS と同じ並び） */
 const KEYS = ["writer","ownerNick","ownerName","ownerFaculty","ownerGrade",
+              "r1q1","r1q2","r1q3",
               "q1","q1Reason","q2","q2Reason","q3","q3Reason",
               "value","valueReason","good","try"];
 
-/* ---------- 2択を組み立て ---------- */
-const qWrap = document.getElementById("questions");
-QUESTIONS.forEach((q, i) => {
-  const n = i + 1;
+/* ---------- 2択を組み立て（1回目：選択のみ／2回目：選択＋理由） ---------- */
+/* 「、」「。」の後ろで改行しやすくする */
+const brk = s => s.replace(/([、。])/g, "$1<wbr>");
+function buildQuestion(container, q, n, name, round, withReason){
   const fs = document.createElement("fieldset");
   fs.className = "q";
-  fs.dataset.field = q.id;
+  fs.dataset.field = name;
   fs.innerHTML = `
-    <legend>Q${n}：${q.a} か ${q.b}</legend>
+    <legend>${round}回目 Q${n}：${q.a} か ${q.b}</legend>
     <div class="q-row">
       <span class="q-label" aria-hidden="true">Q${n}</span>
-      <label class="choice"><input type="radio" name="${q.id}" value="${q.a}"><span>${q.a}</span></label>
+      <label class="choice"><input type="radio" name="${name}" value="${q.a}"><span><b>${brk(q.a)}</b></span></label>
       <span class="or" aria-hidden="true">or</span>
-      <label class="choice"><input type="radio" name="${q.id}" value="${q.b}"><span>${q.b}</span></label>
+      <label class="choice"><input type="radio" name="${name}" value="${q.b}"><span><b>${brk(q.b)}</b></span></label>
     </div>
-    <p class="err-msg">どちらか1つを選んでください</p>
-    <div class="reason" data-field="${q.id}Reason">
-      <label for="${q.id}Reason">理由：</label>
-      <textarea class="lined" id="${q.id}Reason" name="${q.id}Reason" rows="2"></textarea>
+    <p class="err-msg">どちらか1つを選んでください</p>` + (withReason ? `
+    <div class="reason" data-field="${name}Reason">
+      <label for="${name}Reason">理由：</label>
+      <textarea class="lined" id="${name}Reason" name="${name}Reason" rows="2"></textarea>
       <p class="err-msg">理由を書いてください</p>
-    </div>`;
-  qWrap.appendChild(fs);
+    </div>` : "");
+  container.appendChild(fs);
+}
+const r1Wrap = document.getElementById("round1");
+const qWrap  = document.getElementById("questions");
+QUESTIONS.forEach((q, i) => {
+  buildQuestion(r1Wrap, q, i + 1, "r1" + q.id, 1, false);
+  buildQuestion(qWrap,  q, i + 1, q.id,        2, true);
 });
 
 /* ---------- 1行欄は改行させない ---------- */
@@ -591,7 +615,21 @@ function band(ctx, x, y, w, title, sub){
   ctx.fillStyle = KC.text; ctx.font = fnt(13, 500); ctx.fillText(sub, x + 10 + t + 16, y + 20);
   return y + 30;
 }
-function choice(ctx, x, y, w, h, label, on){
+/* 選択肢を最大2行に分ける（「、」「。」で切れるならそこで切る） */
+function choiceLines(ctx, label, maxW){
+  ctx.font = fnt(15, 700);
+  if (ctx.measureText(label).width <= maxW) return [label];
+  const cuts = [];
+  for (let i = 1; i < label.length; i++) if ("、。".includes(label[i - 1])) cuts.push(i);
+  for (const i of cuts.reverse()) {
+    const a = label.slice(0, i), b = label.slice(i);
+    if (ctx.measureText(a).width <= maxW && ctx.measureText(b).width <= maxW) return [a, b];
+  }
+  const lines = wrap(ctx, label, maxW);
+  if (lines.length > 2) { lines.length = 2; lines[1] = fit(ctx, lines[1] + "…", maxW); }
+  return lines;
+}
+function choice(ctx, x, y, w, h, lines, on){
   rrect(ctx, x, y, w, h, 6);
   ctx.fillStyle = on ? KC.choiceOn : "#fff"; ctx.fill();
   if (on) { ctx.setLineDash([]); ctx.strokeStyle = KC.navy; ctx.lineWidth = 1.5; }
@@ -602,7 +640,8 @@ function choice(ctx, x, y, w, h, label, on){
   ctx.strokeStyle = on ? KC.navy : KC.text; ctx.lineWidth = 1.5; ctx.strokeRect(cx, cy, 13, 13);
   if (on) { ctx.fillStyle = KC.navy; ctx.fillRect(cx + 3, cy + 3, 7, 7); }
   ctx.fillStyle = KC.text; ctx.font = fnt(15, on ? 700 : 500);
-  ctx.fillText(fit(ctx, label, w - 40), x + 30, y + h / 2 + 5);
+  const top = y + h / 2 + 5 - (lines.length - 1) * 10;
+  lines.forEach((t, i) => ctx.fillText(t, x + 30, top + i * 20));
 }
 function promptText(ctx, x, y, t, note){
   ctx.fillStyle = KC.text; ctx.font = fnt(15, 500); ctx.fillText(t, x, y + 18);
@@ -627,7 +666,6 @@ async function renderKarte(d){
   ctx.fillText("自身の就活軸を探る　[2026.11.14.大しごとーくSD部門]", L, 46);
   ctx.fillStyle = KC.navy; ctx.font = fnt(36, 900, MINCHO); ctx.fillText("就活カルテ", L, 92);
   const tw = ctx.measureText("就活カルテ").width;
-  ctx.fillStyle = KC.text; ctx.font = fnt(13, 700); ctx.fillText("《２枚目：メンバーが記入》", L + tw + 8, 90);
   {
     const wx = 450, y = 88, lb = "記入者：";
     ctx.fillStyle = KC.text; ctx.font = fnt(14, 700); ctx.fillText(lb, wx, y);
@@ -656,36 +694,73 @@ async function renderKarte(d){
   // A. 究極の２択
   y += 20;
   const aTop = y;
-  y = band(ctx, L, y, CW, "A. 究極の２択", "理由を深堀してみよう！") + 20;
-  QUESTIONS.forEach((q, i) => {
-    const lab = `Q${i + 1}`;
+  y = band(ctx, L, y, CW, "A. 究極の２択", "相手は何を大事にしているんだろう？") + 14;
+  const RX = L + 10, RW = CW - 20, X0 = RX + 10;   // 各回の枠と、その中の左端
+
+  /* 選択肢の1行（Qラベル＋2つの選択肢）を描いて、下端のyを返す */
+  const choiceRow = (q, n, sel, y) => {
+    const lab = `Q${n}`;
     ctx.font = fnt(15, 700);
     const lw = ctx.measureText(lab).width + 14;
-    ctx.fillStyle = KC.navy; ctx.fillRect(L + 10, y, lw, 24);
-    ctx.fillStyle = "#fff"; ctx.fillText(lab, L + 17, y + 18);
-    const bw = 266, bh = 34, by = y - 5, bx1 = L + 10 + lw + 12;
-    choice(ctx, bx1, by, bw, bh, q.a, d[q.id] === q.a);
+    ctx.fillStyle = KC.navy; ctx.fillRect(X0, y, lw, 24);
+    ctx.fillStyle = "#fff"; ctx.fillText(lab, X0 + 7, y + 18);
+    const bw = 266, by = y - 5, bx1 = X0 + lw + 12;
+    const la = choiceLines(ctx, q.a, bw - 40), lb = choiceLines(ctx, q.b, bw - 40);
+    const bh = Math.max(la.length, lb.length) > 1 ? 54 : 34;
+    choice(ctx, bx1, by, bw, bh, la, sel === q.a);
     ctx.fillStyle = KC.text; ctx.font = fnt(13, 700); ctx.textAlign = "center";
-    ctx.fillText("or", bx1 + bw + 22, y + 17); ctx.textAlign = "left";
-    choice(ctx, bx1 + bw + 44, by, bw, bh, q.b, d[q.id] === q.b);
-    y = by + bh + 6;
-    ctx.fillStyle = KC.text; ctx.font = fnt(14, 700); ctx.fillText("理由：", L + 10, y + 24);
-    y = ruled(ctx, L + 58, y, CW - 70, d[q.id + "Reason"], 2);
-    y += (i < QUESTIONS.length - 1) ? 30 : 18;
+    ctx.fillText("or", bx1 + bw + 22, by + bh / 2 + 5); ctx.textAlign = "left";
+    choice(ctx, bx1 + bw + 44, by, bw, bh, lb, sel === q.b);
+    return by + bh;
+  };
+  /* 各回の見出し（「1回目」などの丸タグ＋説明） */
+  const roundHead = (tag, caption, y) => {
+    ctx.font = fnt(13, 700);
+    const tw2 = ctx.measureText(tag).width + 20;
+    rrect(ctx, X0, y, tw2, 22, 11); ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.strokeStyle = KC.navy; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = KC.navy; ctx.fillText(tag, X0 + 10, y + 16);
+    ctx.fillStyle = KC.text; ctx.font = fnt(13, 500); ctx.fillText(caption, X0 + tw2 + 10, y + 16);
+    return y + 22;
+  };
+  const roundBox = (top, bottom) => {
+    rrect(ctx, RX, top, RW, bottom - top, 4);
+    ctx.strokeStyle = KC.line; ctx.lineWidth = 1; ctx.stroke();
+  };
+
+  // 1回目：選択のみ
+  let rTop = y;
+  y = roundHead("1回目", "直感で選んでみよう！", y + 10) + 20;
+  QUESTIONS.forEach((q, i) => { y = choiceRow(q, i + 1, d["r1" + q.id], y) + 16; });
+  y += 2; roundBox(rTop, y);
+
+  // 2回目：選択＋理由
+  y += 14; rTop = y;
+  y = roundHead("2回目", "自分の価値観を考えてみよう！／選んだ理由を質問してみよう！", y + 10) + 20;
+  QUESTIONS.forEach((q, i) => {
+    y = choiceRow(q, i + 1, d[q.id], y) + 6;
+    ctx.fillStyle = KC.text; ctx.font = fnt(14, 700); ctx.fillText("理由：", X0, y + 24);
+    y = ruled(ctx, X0 + 48, y, RX + RW - 12 - (X0 + 48), d[q.id + "Reason"], 2);
+    y += (i < QUESTIONS.length - 1) ? 28 : 14;
   });
+  roundBox(rTop, y);
+  y += 22;
+
+  // 気になった価値観（Aの最後）
+  const P = L + 12, PW = CW - 24;
+  y = promptText(ctx, P, y, "気になった価値観は？");
+  y = ruled(ctx, P, y - 4, PW, d.value, 1) + 18;
+  y = promptText(ctx, P, y, "その理由は？");
+  y = ruled(ctx, P, y - 4, PW, d.valueReason, 2) + 18;
   ctx.strokeStyle = KC.line; ctx.lineWidth = 1.5; ctx.strokeRect(L, aTop, CW, y - aTop);
 
   // 区切り
   y += 24; ctx.setLineDash([5, 4]); ctx.strokeStyle = KC.line; ctx.lineWidth = 1.2;
   ln(ctx, 30, y, W - 30, y); ctx.setLineDash([]); y += 24;
 
-  // B. 所感
-  const bTop = y, P = L + 12, PW = CW - 24;
-  y = band(ctx, L, y, CW, "B. 所感", "全体を通して持ち主に伝えたいことを書こう！") + 10;
-  y = promptText(ctx, P, y, "気になった価値観は？");
-  y = ruled(ctx, P, y - 4, PW, d.value, 1) + 18;
-  y = promptText(ctx, P, y, "その理由は？");
-  y = ruled(ctx, P, y - 4, PW, d.valueReason, 2) + 18;
+  // B. 所見
+  const bTop = y;
+  y = band(ctx, L, y, CW, "B. 所見", "全体を通して持ち主に伝えたいことを書こう！") + 10;
   y = promptText(ctx, P, y, "話を聞いて、いいなと思ったこと", "（書く側の感想）");
   y = ruled(ctx, P, y - 4, PW, d.good, 2) + 18;
   y = promptText(ctx, P, y, "こんなことしてみたらどう？", "（話し手に向けて）");
