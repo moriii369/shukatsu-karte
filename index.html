@@ -139,7 +139,8 @@ select.rule-input:invalid{color:#8b98a1}
 .round-head{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;margin-bottom:12px;font-size:13px;font-weight:500}
 .round-tag{background:#fff;color:var(--navy);border:1.5px solid var(--navy);border-radius:999px;font-weight:700;font-size:13px;padding:0 10px;line-height:1.7}
 #round1 .q{margin-bottom:14px}
-.cap > span{display:inline-block}
+.cap > span,.cap > small{display:inline-block}
+.cap .note{font-size:12px;color:var(--muted);margin-left:6px}
 
 /* ---------- 送信 ---------- */
 .actions{margin-top:26px;text-align:center}
@@ -244,10 +245,10 @@ select.rule-input:invalid{color:#8b98a1}
 
     <p id="summary" role="alert">未入力の項目があります。赤い表示の欄を確認してください。</p>
 
-    <!-- 持ち主（話し手） -->
+    <!-- ペアの情報 -->
     <section class="box" aria-labelledby="secP">
       <div class="band">
-        <h2 id="secP">持ち主（話し手）</h2>
+        <h2 id="secP">ペアの情報</h2>
         <p>話を聞いた相手のことを書こう！</p>
       </div>
       <div class="box-body prof">
@@ -289,11 +290,11 @@ select.rule-input:invalid{color:#8b98a1}
       </div>
       <div class="box-body">
         <div class="round">
-          <div class="round-head"><span class="round-tag">1回目</span><span>直感で選んでみよう！</span></div>
+          <div class="round-head"><span class="round-tag">1回目</span><span class="cap"><span>直感で選んでみよう！</span><small class="note">（ここには相手のことを記入）</small></span></div>
           <div id="round1"></div>
         </div>
         <div class="round">
-          <div class="round-head"><span class="round-tag">2回目</span><span class="cap"><span>自分の価値観を考えてみよう！／</span><span>選んだ理由を質問してみよう！</span></span></div>
+          <div class="round-head"><span class="round-tag">2回目</span><span class="cap"><span>自分の価値観を考えてみよう！／</span><span>選んだ理由を質問してみよう！</span><small class="note">（ここには相手のことを記入）</small></span></div>
           <div id="questions"></div>
         </div>
         <div class="a-values">
@@ -324,11 +325,6 @@ select.rule-input:invalid{color:#8b98a1}
           <label class="prompt" for="good">話を聞いて、いいなと思ったこと<small>（書く側の感想）</small></label>
           <textarea class="lined" id="good" name="good" rows="2"></textarea>
           <p class="err-msg">いいなと思ったことを書いてください</p>
-        </div>
-        <div class="field" data-field="try">
-          <label class="prompt" for="try">こんなことしてみたらどう？<small>（話し手に向けて）</small></label>
-          <textarea class="lined" id="try" name="try" rows="2"></textarea>
-          <p class="err-msg">話し手へのひとことを書いてください</p>
         </div>
       </div>
     </section>
@@ -396,7 +392,7 @@ const QUESTIONS = [
 const KEYS = ["writer","ownerNick","ownerName","ownerFaculty","ownerGrade",
               "r1q1","r1q2","r1q3",
               "q1","q1Reason","q2","q2Reason","q3","q3Reason",
-              "value","valueReason","good","try"];
+              "value","valueReason","good"];
 
 /* ---------- 2択を組み立て（1回目：選択のみ／2回目：選択＋理由） ---------- */
 /* 「、」「。」の後ろで改行しやすくする */
@@ -568,7 +564,8 @@ const KC = { navy:"#2a6a91", line:"#3d7ca3", band:"#e2eef7", choiceB:"#9fc0d6", 
 const GOTHIC = '"Zen Maru Gothic","Hiragino Maru Gothic ProN","Meiryo",sans-serif';
 const MINCHO = '"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho",serif';
 const fnt = (size, weight = 400, fam = GOTHIC) => `${weight} ${size}px ${fam}`;
-const MAX_LINES = 10;   // 1つの欄で描く最大行数
+const MAX_LINES = 10;
+const ROUND_NOTE = "（ここには相手のことを記入）";   // 1つの欄で描く最大行数
 
 function ln(ctx, x1, y1, x2, y2){ ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
 function rrect(ctx, x, y, w, h, r){
@@ -675,10 +672,10 @@ async function renderKarte(d){
   }
   ctx.strokeStyle = KC.line; ctx.lineWidth = 2; ln(ctx, 30, 108, W - 30, 108); ln(ctx, 30, 113, W - 30, 113);
 
-  // 持ち主（話し手）
+  // ペアの情報
   let y = 128;
   const pTop = y;
-  y = band(ctx, L, y, CW, "持ち主（話し手）", "話を聞いた相手のこと") + 6;
+  y = band(ctx, L, y, CW, "ペアの情報", "話を聞いた相手のことを書こう！") + 6;
   const colW = (CW - 48) / 2;
   [["ニックネーム：", d.ownerNick], ["名前：", d.ownerName], ["学部：", d.ownerFaculty], ["学年：", d.ownerGrade]]
     .forEach(([lb, v], i) => {
@@ -721,6 +718,8 @@ async function renderKarte(d){
     ctx.strokeStyle = KC.navy; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = KC.navy; ctx.fillText(tag, X0 + 10, y + 16);
     ctx.fillStyle = KC.text; ctx.font = fnt(13, 500); ctx.fillText(caption, X0 + tw2 + 10, y + 16);
+    const cw = ctx.measureText(caption).width;
+    ctx.fillStyle = KC.muted; ctx.font = fnt(11, 500); ctx.fillText(ROUND_NOTE, X0 + tw2 + 10 + cw + 10, y + 16);
     return y + 22;
   };
   const roundBox = (top, bottom) => {
@@ -763,8 +762,6 @@ async function renderKarte(d){
   y = band(ctx, L, y, CW, "B. 所見", "全体を通して持ち主に伝えたいことを書こう！") + 10;
   y = promptText(ctx, P, y, "話を聞いて、いいなと思ったこと", "（書く側の感想）");
   y = ruled(ctx, P, y - 4, PW, d.good, 2) + 18;
-  y = promptText(ctx, P, y, "こんなことしてみたらどう？", "（話し手に向けて）");
-  y = ruled(ctx, P, y - 4, PW, d.try, 2) + 18;
   ctx.strokeStyle = KC.line; ctx.lineWidth = 1.5; ctx.strokeRect(L, bTop, CW, y - bTop);
 
   // 必要な高さで切り出す（最低A4の縦横比）
