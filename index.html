@@ -377,7 +377,7 @@ select.rule-input:invalid{color:#8b98a1}
    ① 送信先（Apps Script のウェブアプリURL …/exec）
    空のままだと「テストモード」で動き、どこにも送信されません
    ========================================================= */
-const ENDPOINT = "https://script.google.com/macros/s/AKfycbzU3nsYXFJigBz6Ys1EEmTXFUzBZpVd0C11BAsgSNpSj3uDcPbhdkg3nwnf_QDGtpwAdw/exec";
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbwIyfRstYdRb-tYfhod8-_yHHAdUlm40NSrXvFYaT7f_Sfp-Lro3tSquVdE66UNqRYfcw/exec";
 
 /* =========================================================
    ② 2択の中身
@@ -504,12 +504,31 @@ async function postOnce(payload){
     clearTimeout(timer);
   }
 }
+/* 返事が読めなかったとき用：この送信IDがシートに記録済みかを問い合わせる
+   （scriptタグ経由なので、Googleにログイン中のブラウザでも読める） */
+function checkSaved(id){
+  return new Promise(resolve => {
+    const cb = "__karteCheck" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
+    const done = v => { clearTimeout(timer); try { delete window[cb]; } catch(e){} s.remove(); resolve(v); };
+    const timer = setTimeout(() => done(false), 15000);
+    window[cb] = d => done(!!(d && d.found && d.id === id));
+    s.onerror = () => done(false);
+    s.src = ENDPOINT + "?check=" + encodeURIComponent(id) + "&callback=" + cb + "&t=" + Date.now();
+    document.head.appendChild(s);
+  });
+}
 async function sendWithRetry(payload){
   const waits = [0, 1500, 4000];   // 失敗したら少し待って自動で再挑戦（合計3回）
   let lastErr;
   for (const w of waits) {
     if (w) await sleep(w);
-    try { return await postOnce(payload); } catch(e) { lastErr = e; }
+    try { return await postOnce(payload); }
+    catch(e) {
+      lastErr = e;
+      // 返事は読めなかったが、記録はされているかもしれない → シートを確認
+      if (await checkSaved(payload.id)) return { ok:true, id:payload.id, verified:true };
+    }
   }
   throw lastErr;
 }
