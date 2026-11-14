@@ -25,7 +25,7 @@
   --paper:#ffffff;
   --bg:#eef3f7;
   --error:#c2410c;
-  --row:2.1em;           /* 記入行の高さ */
+  --row:32px;            /* 記入行の高さ（整数pxにして罫線が欠けないようにする） */
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -121,7 +121,8 @@ select.rule-input:invalid{color:#8b98a1}
   flex:1;width:100%;border:0;resize:none;outline:none;color:var(--text);
   font:inherit;font-size:15px;line-height:var(--row);padding:0 4px;
   background-color:transparent;
-  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--row) - 1px),var(--rule) calc(var(--row) - 1px),var(--rule) var(--row));
+  background-image:linear-gradient(to top,var(--rule) 1px,transparent 1px);
+  background-size:100% var(--row);background-repeat:repeat-y;
   background-attachment:local;min-height:calc(var(--row) * 2);
 }
 .lined.one{min-height:var(--row);resize:none;overflow:hidden}
@@ -396,8 +397,13 @@ select.rule-input:invalid{color:#8b98a1}
 const ENDPOINT = "https://script.google.com/macros/s/AKfycbwIyfRstYdRb-tYfhod8-_yHHAdUlm40NSrXvFYaT7f_Sfp-Lro3tSquVdE66UNqRYfcw/exec";
 
 /* =========================================================
-   ② 2択の中身
+   ② 2択の中身（1回目：直感で選ぶ／2回目：理由も書く）
    ========================================================= */
+const QUESTIONS_R1 = [
+  { id:"q1", a:"年功序列", b:"実力主義" },
+  { id:"q2", a:"単独行動", b:"チーム戦" },
+  { id:"q3", a:"給料",     b:"休み" }
+];
 const QUESTIONS = [
   { id:"q1", a:"安定して堅実に、ステップアップできる環境", b:"実力主義で、評価が直結。急成長も狙える環境" },
   { id:"q2", a:"１人で取り組む",       b:"みんなで協力" },
@@ -435,10 +441,8 @@ function buildQuestion(container, q, n, name, round, withReason){
 }
 const r1Wrap = document.getElementById("round1");
 const qWrap  = document.getElementById("questions");
-QUESTIONS.forEach((q, i) => {
-  buildQuestion(r1Wrap, q, i + 1, "r1" + q.id, 1, false);
-  buildQuestion(qWrap,  q, i + 1, q.id,        2, true);
-});
+QUESTIONS_R1.forEach((q, i) => buildQuestion(r1Wrap, q, i + 1, "r1" + q.id, 1, false));
+QUESTIONS.forEach((q, i)    => buildQuestion(qWrap,  q, i + 1, q.id,        2, true));
 
 /* ---------- 記入欄：書いた量に合わせて行が増える ---------- */
 function autosize(t){
@@ -797,7 +801,7 @@ async function renderKarte(d){
   // 1回目：選択のみ
   let rTop = y;
   y = roundHead("②", "1回目", "直感で選んでみよう！", y + 10) + 18;
-  QUESTIONS.forEach((q, i) => { y = choiceRow(q, i + 1, d["r1" + q.id], y) + (i < QUESTIONS.length - 1 ? 19 : 14); });
+  QUESTIONS_R1.forEach((q, i) => { y = choiceRow(q, i + 1, d["r1" + q.id], y) + (i < QUESTIONS_R1.length - 1 ? 19 : 14); });
   roundBox(rTop, y);
 
   // 2回目：選択＋理由
