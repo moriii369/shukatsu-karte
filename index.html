@@ -252,11 +252,6 @@ select.rule-input:invalid{color:#8b98a1}
         </div>
       </div>
       <div class="head-right">
-        <div class="no-box" data-field="karteNo">
-          <label for="karteNo">カルテNo.</label>
-          <input id="karteNo" name="karteNo" inputmode="numeric" autocomplete="off" maxlength="3" placeholder="000">
-          <p class="err-msg">紙のカルテ右上の番号（1〜3桁）を入れてください</p>
-        </div>
         <div class="who" data-field="writer">
           <label for="writer">記入者<small>（フルネーム）</small>：</label>
           <input class="rule-input" id="writer" name="writer" autocomplete="name">
@@ -411,7 +406,7 @@ const QUESTIONS = [
 ];
 
 /* 送信する項目（Code.gs の KEYS と同じ並び） */
-const KEYS = ["karteNo","writer","ownerNick","ownerFaculty","ownerGrade",
+const KEYS = ["writer","ownerNick","ownerFaculty","ownerGrade",
               "r1q1","r1q2","r1q3",
               "q1","q1Reason","q2","q2Reason","q3","q3Reason",
               "value","valueReason","good"];
@@ -498,11 +493,6 @@ loadDraft();
 autosizeAll();
 if (!form.elements._id.value) { form.elements._id.value = newId(); saveDraft(); }
 
-/* ---------- カルテNo.：全角数字も受け付けて半角の数字だけにする ---------- */
-const noInput = form.elements.karteNo;
-const normNo = v => String(v || "").replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\D/g, "").slice(0, 3);
-noInput.addEventListener("input", () => { const v = normNo(noInput.value); if (v !== noInput.value) noInput.value = v; });
-
 /* ---------- 入力チェック（全項目必須） ---------- */
 function clearError(el){
   const box = el && el.closest && el.closest("[data-field]");
@@ -514,7 +504,6 @@ function validate(){
   form.querySelectorAll("[data-field]").forEach(box => {
     const el = form.elements[box.dataset.field];
     let ok = !!(el && String(el.value || "").trim());
-    if (box.dataset.field === "karteNo") ok = /^\d{1,3}$/.test(normNo(el.value)) && Number(normNo(el.value)) > 0;
     box.classList.toggle("has-error", !ok);
     if (!ok && !firstBad) firstBad = box;
   });
@@ -576,7 +565,6 @@ function collect(){
   const raw = Object.fromEntries(new FormData(form));
   const d = { id: raw._id };
   KEYS.forEach(k => { d[k] = (raw[k] || "").trim(); });
-  if (d.karteNo) d.karteNo = normNo(d.karteNo).padStart(3, "0");
   return d;
 }
 
@@ -610,7 +598,7 @@ form.addEventListener("submit", async e => {
 document.getElementById("nextBtn").addEventListener("click", () => {
   sheet.classList.remove("sent");
   window.scrollTo({ top:0 });
-  form.elements.karteNo.focus();
+  form.elements.ownerNick.focus();
 });
 
 /* 開いた時点でサーバーを起こしておく（初回送信の待ち時間を短くする） */
@@ -725,13 +713,6 @@ async function renderKarte(d){
   ctx.fillStyle = KC.text; ctx.font = fnt(12, 700);
   ctx.fillText("自身の就活軸を探る　[2026.11.14.大しごとーくSD部門]", L, 46);
   ctx.fillStyle = KC.navy; ctx.font = fnt(36, 900, MINCHO); ctx.fillText("就活カルテ", L, 92);
-  // カルテNo.
-  {
-    const bw = 170, bx = R - bw, by = 24, bh = 36;
-    rrect(ctx, bx, by, bw, bh, 6); ctx.strokeStyle = KC.navy; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.fillStyle = KC.navy; ctx.font = fnt(12, 700); ctx.fillText("カルテNo.", bx + 16, by + 24);
-    ctx.font = fnt(22, 700); ctx.fillText(d.karteNo ? normNo(d.karteNo).padStart(3, "0") : "", bx + 92, by + 27);
-  }
   {
     const wx = 450, y = 88, lb = "記入者：";
     ctx.fillStyle = KC.text; ctx.font = fnt(14, 700); ctx.fillText(lb, wx, y);
